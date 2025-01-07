@@ -4,7 +4,7 @@
 # --------------------------------------------------------------------------------------------
 # pylint: disable=unused-argument,too-many-lines
 
-from getpass import getpass
+from .pwinput import pwinput
 from azure.cli.command_modules.acs._client_factory import get_resources_client
 from azure.cli.core.azclierror import (
     UnrecognizedArgumentError,
@@ -152,12 +152,12 @@ def connect_vmmserver(
             'password': password,
         }
         while not creds['fqdn']:
-            print('Please provide vmmserver FQDN or IP address: ', end='')
+            print('Please provide SCVMM Server FQDN or IP address: ', end='')
             creds['fqdn'] = input()
             if not creds['fqdn']:
                 print('Parameter is required, please try again')
         while not creds['port']:
-            print('Please provide vmmserver port (Default: 8100): ', end='')
+            print('Please provide SCVMM Port (Default: 8100): ', end='')
             try:
                 creds['port'] = input()
                 if not creds['port']:
@@ -167,20 +167,29 @@ def connect_vmmserver(
                 print('Port must be a number, please try again')
                 creds['port'] = None
         while not creds['username']:
-            print('Please provide vmmserver username: ', end='')
+            print('Please provide SCVMM Administrator Username: ', end='')
             creds['username'] = input()
             if not creds['username']:
                 print('Parameter is required, please try again')
         while not creds['password']:
-            creds['password'] = getpass('Please provide vmmserver password: ')
+            creds['password'] = pwinput('Please provide SCVMM Administrator Password: ')
             if not creds['password']:
                 print('Parameter is required, please try again')
-            passwdConfim = getpass('Please confirm vmmserver password: ')
+            passwdConfim = pwinput('Please confirm SCVMM Administrator Password: ')
             if creds['password'] != passwdConfim:
                 print('Passwords do not match, please try again')
                 creds['password'] = None
-        print('Confirm vmmserver details? [Y/n]: ', end='')
+        print()
+        print('SCVMM Server Details:')
+        print(f"SCVMM Server FQDN/IP: {creds['fqdn']}")
+        print(f"SCVMM Port: {creds['port']}")
+        print(f"SCVMM Administrator Username: {creds['username']}")
+        print()
+        print('Confirm SCVMM Server details? [Y/N]: ', end='')
         res = input().lower()
+        while res not in ['y', 'n', '']:
+            print('Confirm SCVMM Server details? [Y/N]: ', end='')
+            res = input().lower()
         if res in ['y', '']:
             fqdn, port, username, password = (
                 creds['fqdn'],
@@ -189,8 +198,8 @@ def connect_vmmserver(
                 creds['password'],
             )
             creds_ok = True
-        elif res != 'n':
-            print('Please type y/n or leave empty.')
+        else:
+            print()
     assert fqdn
 
     username_creds = VmmCredential(
